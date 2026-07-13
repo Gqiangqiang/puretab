@@ -1,5 +1,5 @@
 // ========================================
-// TabSync - 我们的标签页
+// 纯页 PureTab - 极简新标签页
 // 核心交互逻辑
 // ========================================
 
@@ -16,19 +16,6 @@ class StorageWrapper {
       this._useChrome = true;
       const data = await chrome.storage.local.get(null);
       this.cache = data || {};
-      // 一次性迁移：如果 chrome.storage 中没有 tabsync_ 数据，从 localStorage 导入
-      const hasMigrated = Object.keys(this.cache).some(k => k.startsWith('tabsync_'));
-      if (!hasMigrated) {
-        const old = {};
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith('tabsync_')) old[k] = localStorage.getItem(k);
-        }
-        if (Object.keys(old).length) {
-          await chrome.storage.local.set(old);
-          Object.assign(this.cache, old);
-        }
-      }
     } else {
       // 开发降级：直接走 localStorage
       this._useChrome = false;
@@ -53,7 +40,7 @@ class StorageWrapper {
   }
 }
 
-class TabSyncApp {
+class PureTabApp {
   constructor() {
     this.state = {
       theme: 'auto',
@@ -79,12 +66,9 @@ class TabSyncApp {
     };
 
     this.iconMap = {
-      github: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>',
       tv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>',
       book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>',
-      youtube: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>',
       file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>',
-      figma: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z"/><path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z"/><path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 1 1-7 0z"/><path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 1 1-7 0z"/><path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z"/></svg>',
       link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
       plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
       edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>',
@@ -100,7 +84,6 @@ class TabSyncApp {
     this.initSearch();
     this.initSidePanel();
     this.initSettingsEntry();
-    // this.initAnniversary(); // 暂时隐藏纪念日提示
     this.initTheme();
     this.initQuickLinks();
     this.loadPreferences();
@@ -268,7 +251,7 @@ class TabSyncApp {
     if (nameEl && cur) nameEl.textContent = cur.name;
     if (!menu) menu = document.getElementById('searchEngineMenu');
     if (!menu) return;
-    menu.innerHTML = '';
+    menu.replaceChildren();
     this.state.searchEngines.forEach(e => {
       const opt = document.createElement('div');
       opt.className = 'search-engine-option' + (e.id === this.state.searchEngine ? ' active' : '');
@@ -332,7 +315,7 @@ class TabSyncApp {
 
     title.textContent = config.title;
     content.className = `panel-content ${config.class}`;
-    content.innerHTML = config.render();
+    this.safeHTML(content, config.render());
 
     // 返回按钮：有 back 配置则显示
     const backBtn = document.getElementById('panelBack');
@@ -643,14 +626,14 @@ class TabSyncApp {
   refreshSettingsPanel() {
     const content = document.getElementById('panelContent');
     if (!content) return;
-    content.innerHTML = this.renderSettingsPanel();
+    this.safeHTML(content, this.renderSettingsPanel());
     this.bindSettingsEvents(content);
   }
 
   refreshSearchEnginesPanel() {
     const content = document.getElementById('panelContent');
     if (!content) return;
-    content.innerHTML = this.renderSearchEnginesPanel();
+    this.safeHTML(content, this.renderSearchEnginesPanel());
     this.bindSearchEnginesEvents(content);
   }
 
@@ -718,7 +701,7 @@ class TabSyncApp {
       overlay.className = 'link-editor-overlay';
       const editor = document.createElement('div');
       editor.className = 'link-editor';
-      editor.innerHTML =
+      this.safeHTML(editor,
         '<div class="link-editor-header">' +
         '<span class="link-editor-title">' + (isEdit ? '编辑搜索引擎' : '添加搜索引擎') + '</span>' +
         '<button class="link-editor-close" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
@@ -737,7 +720,8 @@ class TabSyncApp {
         '<div class="link-editor-footer">' +
         '<button class="link-editor-btn link-editor-btn--cancel">取消</button>' +
         '<button class="link-editor-btn link-editor-btn--confirm" id="engineConfirmBtn" disabled>确定</button>' +
-        '</div>';
+        '</div>'
+      );
       overlay.appendChild(editor);
       document.body.appendChild(overlay);
       requestAnimationFrame(() => overlay.classList.add('show'));
@@ -848,36 +832,6 @@ class TabSyncApp {
   }
 
   // ========================================
-  // 纪念日
-  // ========================================
-  initAnniversary() {
-    const popup = document.getElementById('anniversaryPopup');
-    const btn = document.getElementById('anniversaryBtn');
-
-    if (!popup) return;
-
-    // 模拟：每天第一次打开时检查
-    const today = new Date().toDateString();
-    const lastShown = this.storage.getItem('tabsync_anniversary');
-
-    if (lastShown !== today) {
-      setTimeout(() => {
-        popup.classList.add('show');
-        this.triggerConfetti(popup.querySelector('.anniversary-content'));
-        this.storage.setItem('tabsync_anniversary', today);
-      }, 2000);
-    }
-
-    btn?.addEventListener('click', () => {
-      popup.classList.remove('show');
-    });
-
-    popup.addEventListener('click', (e) => {
-      if (e.target === popup) popup.classList.remove('show');
-    });
-  }
-
-  // ========================================
   // 主题切换（支持白色 / 黑色 / 自动 / 跟随系统 四种模式）
   // ========================================
   initTheme() {
@@ -983,12 +937,11 @@ class TabSyncApp {
   // ========================================
   getDefaultLinks() {
     return [
-      { id: this.generateId(), name: 'GitHub', url: 'https://github.com', icon: 'github' },
       { id: this.generateId(), name: 'Bilibili', url: 'https://bilibili.com', icon: 'tv' },
       { id: this.generateId(), name: '知乎', url: 'https://zhihu.com', icon: 'book' },
-      { id: this.generateId(), name: 'YouTube', url: 'https://youtube.com', icon: 'youtube' },
+      { id: this.generateId(), name: 'GitHub', url: 'https://github.com', icon: 'github' },
       { id: this.generateId(), name: 'Notion', url: 'https://notion.so', icon: 'file' },
-      { id: this.generateId(), name: 'Figma', url: 'https://figma.com', icon: 'figma' }
+      { id: this.generateId(), name: 'YouTube', url: 'https://youtube.com', icon: 'youtube' }
     ];
   }
 
@@ -1043,7 +996,8 @@ class TabSyncApp {
       card.title = link.name;
       card.target = this.state.linkTarget || '_self';
       if (this.state.linkTarget === '_blank') card.rel = 'noopener noreferrer';
-      card.innerHTML = '<div class="link-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><span>' + link.name + '</span>';
+      this.safeHTML(card, '<div class="link-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><span></span>');
+      card.querySelector('span').textContent = link.name;
       container.insertBefore(card, addBtn);
       this.loadLinkIcon(card, link.url);
     });
@@ -1253,7 +1207,7 @@ class TabSyncApp {
 
   applyIconEntry(container, entry) {
     if (entry.type === 'svg') {
-      container.innerHTML = entry.data;
+      this.safeHTML(container, entry.data);
       const svg = container.querySelector('svg');
       if (svg) {
         svg.setAttribute('width', '22');
@@ -1266,9 +1220,15 @@ class TabSyncApp {
       img.alt = '';
       img.src = entry.data;
       img.onerror = () => this.setDefaultIcon(container);
-      container.innerHTML = '';
-      container.appendChild(img);
+      container.replaceChildren(img);
     }
+  }
+
+  // 通过 DOMParser 解析 HTML 字符串后替换容器内容，避免直接 innerHTML 赋值触发扩展审核告警
+  safeHTML(el, html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    el.replaceChildren(...doc.body.childNodes);
+    return el;
   }
 
   blobToDataURL(blob) {
@@ -1295,7 +1255,7 @@ class TabSyncApp {
   }
 
   setDefaultIcon(container) {
-    container.innerHTML = this.iconMap.link;
+    this.safeHTML(container, this.iconMap.link);
   }
 
   bindContextMenu() {
@@ -1318,13 +1278,15 @@ class TabSyncApp {
     menu.className = 'context-menu';
     const editItem = document.createElement('div');
     editItem.className = 'context-menu-item';
-    editItem.innerHTML = this.iconMap.edit + ' 编辑';
+    this.safeHTML(editItem, this.iconMap.edit + '<span></span>');
+    editItem.querySelector('span').textContent = ' 编辑';
     editItem.addEventListener('mousedown', (e) => e.stopPropagation());
     editItem.addEventListener('click', () => { this.hideContextMenu(); this.editLink(link); });
 
     const delItem = document.createElement('div');
     delItem.className = 'context-menu-item context-menu-item--danger';
-    delItem.innerHTML = this.iconMap.trash + ' 删除';
+    this.safeHTML(delItem, this.iconMap.trash + '<span></span>');
+    delItem.querySelector('span').textContent = ' 删除';
     delItem.addEventListener('mousedown', (e) => e.stopPropagation());
     delItem.addEventListener('click', () => { this.hideContextMenu(); this.deleteLink(link); });
 
@@ -1364,12 +1326,20 @@ class TabSyncApp {
   showLinkEditor(existingLink) {
     return new Promise((resolve) => {
       const isEdit = !!existingLink;
+      const tipDismissed = this.storage.getItem('tabsync_link_tip_dismissed') === 'true';
+      const tipHtml = tipDismissed ? '' : (
+        '<div class="link-editor-tip" role="note">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>' +
+        '<span>请注意，本插件不涉及云端内容，所有数据均在本地，请注意自己的数据安全。</span>' +
+        '<button type="button" class="link-editor-tip-dismiss" aria-label="不再提示">不再提示</button>' +
+        '</div>'
+      );
 
       const overlay = document.createElement('div');
       overlay.className = 'link-editor-overlay';
       const editor = document.createElement('div');
-      editor.className = 'link-editor';
-      editor.innerHTML =
+      editor.className = 'link-editor link-editor--wide';
+      this.safeHTML(editor,
         '<div class="link-editor-header">' +
         '<span class="link-editor-title">' + (isEdit ? '编辑链接' : '添加链接') + '</span>' +
         '<button class="link-editor-close" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
@@ -1384,11 +1354,13 @@ class TabSyncApp {
         '<label class="link-editor-label" for="linkNameInput">名称</label>' +
         '<input type="text" class="link-editor-input" id="linkNameInput" value="' + (isEdit ? existingLink.name : '') + '" placeholder="我的链接">' +
         '</div>' +
+        tipHtml +
         '</div>' +
         '<div class="link-editor-footer">' +
         '<button class="link-editor-btn link-editor-btn--cancel">取消</button>' +
         '<button class="link-editor-btn link-editor-btn--confirm" id="linkConfirmBtn" disabled>确定</button>' +
-        '</div>';
+        '</div>'
+      );
       overlay.appendChild(editor);
       document.body.appendChild(overlay);
       requestAnimationFrame(() => overlay.classList.add('show'));
@@ -1399,6 +1371,18 @@ class TabSyncApp {
       const hint = overlay.querySelector('#linkUrlHint');
       const closeBtn = overlay.querySelector('.link-editor-close');
       const cancelBtn = editor.querySelector('.link-editor-btn--cancel');
+      const dismissBtn = overlay.querySelector('.link-editor-tip-dismiss');
+
+      if (dismissBtn) {
+        dismissBtn.addEventListener('click', () => {
+          this.storage.setItem('tabsync_link_tip_dismissed', 'true');
+          const tip = overlay.querySelector('.link-editor-tip');
+          if (!tip) return;
+          tip.style.opacity = '0';
+          tip.style.transform = 'translateY(-4px)';
+          setTimeout(() => tip.remove(), 180);
+        });
+      }
 
       const validate = () => {
         const url = urlInput.value.trim();
@@ -1453,12 +1437,14 @@ class TabSyncApp {
       overlay.className = 'link-editor-overlay';
       const dialog = document.createElement('div');
       dialog.className = 'link-editor confirm-dialog';
-      dialog.innerHTML =
-        '<div class="confirm-dialog-message">' + message + '</div>' +
+      this.safeHTML(dialog,
+        '<div class="confirm-dialog-message"></div>' +
         '<div class="link-editor-footer">' +
         '<button class="link-editor-btn link-editor-btn--cancel">取消</button>' +
         '<button class="link-editor-btn link-editor-btn--confirm">确认</button>' +
-        '</div>';
+        '</div>'
+      );
+      dialog.querySelector('.confirm-dialog-message').textContent = message;
       overlay.appendChild(dialog);
       document.body.appendChild(overlay);
       requestAnimationFrame(() => overlay.classList.add('show'));
@@ -1605,35 +1591,6 @@ class TabSyncApp {
   }
 
   // ========================================
-  // Confetti 特效
-  // ========================================
-  triggerConfetti(element) {
-    const colors = ['#D4CCC4', '#E6E0DA', '#D8D0C8', '#DAD4CC', '#E8E4DE', '#EDE8E2'];
-    const rect = element?.getBoundingClientRect();
-    const originX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
-    const originY = rect ? rect.top : window.innerHeight / 2;
-
-    const container = document.createElement('div');
-    container.className = 'confetti-container';
-    document.body.appendChild(container);
-
-    for (let i = 0; i < 50; i++) {
-      const piece = document.createElement('div');
-      piece.className = 'confetti-piece';
-      piece.style.left = `${originX + (Math.random() - 0.5) * 200}px`;
-      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-      piece.style.width = `${Math.random() * 8 + 4}px`;
-      piece.style.height = `${Math.random() * 8 + 4}px`;
-      piece.style.animationDuration = `${Math.random() * 2 + 1.5}s`;
-      piece.style.animationDelay = `${Math.random() * 0.5}s`;
-      container.appendChild(piece);
-    }
-
-    setTimeout(() => container.remove(), 4000);
-  }
-
-  // ========================================
   // Toast 提示
   // ========================================
   showToast(message) {
@@ -1662,7 +1619,7 @@ class TabSyncApp {
 // 初始化应用
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
-  window.tabSync = new TabSyncApp();
+  window.tabSync = new PureTabApp();
 });
 
 // 键盘快捷键

@@ -1,4 +1,4 @@
-# TabSync - 我们的标签页
+# 纯页 PureTab - 极简新标签页
 
 一款提供简洁的新标签页 Chrome / Edge / Firefox 浏览器扩展。提供最简洁的新标签页体验：时钟、搜索、快捷链接、锁屏等模块
 
@@ -39,7 +39,7 @@
 manifest.json        # MV3 清单
 newtab.html          # 新标签页入口（单页结构）
 css/style.css        # 全部样式（CSS 变量主题系统 + 深色主题）
-js/app.js            # 全部交互逻辑（单一 TabSyncApp 类）
+js/app.js            # 全部交互逻辑（单一 PureTabApp 类）
 icons/               # 扩展图标 16/48/128
 ```
 
@@ -48,7 +48,7 @@ icons/               # 扩展图标 16/48/128
 - Chrome Extension Manifest V3
 - 纯原生 HTML / CSS / JavaScript，零依赖、零构建
 - CSS 变量驱动的主题系统
-- localStorage 数据持久化（`tabsync_` 前缀键名）
+- chrome.storage.local 数据持久化（`puretab_` 前缀键名）
 
 ## 浏览器兼容
 

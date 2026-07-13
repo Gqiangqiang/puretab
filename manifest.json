@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "TabSync - 我们的标签页",
-  "version": "1.0.1",
-  "description": "一款面向亲密关系的协作式新标签页插件",
+  "name": "纯页 PureTab - 极简新标签页",
+  "version": "1.0.0",
+  "description": "一款极简的新标签页扩展，提供时钟、搜索、快捷链接、主题与锁屏等基础功能。",
   "permissions": [
     "storage"
   ],
@@ -19,7 +19,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "1909809427@qq.com.tabsync",
+      "id": "puretab.18095691014@163.com",
       "strict_min_version": "109.0",
       "data_collection_permissions": {
         "required": ["none"]

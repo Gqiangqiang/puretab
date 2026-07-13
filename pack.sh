@@ -1,14 +1,14 @@
 #!/bin/bash
-# TabSync 扩展打包脚本
+# 纯页 PureTab 扩展打包脚本
 # 用法: ./pack.sh
 
 set -e
 
-NAME="tabsync"
+NAME="puretab"
 VERSION=$(python3 -c "import json;print(json.load(open('manifest.json'))['version'])")
 OUTPUT="dist/${NAME}-v${VERSION}.zip"
 
-echo "📦 打包 TabSync v${VERSION}..."
+echo "📦 打包 纯页 PureTab v${VERSION}..."
 
 # 清理旧的 dist
 rm -rf dist
