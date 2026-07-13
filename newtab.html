@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabSync - 我们的标签页</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 背景层（玫瑰光晕渐变） -->
+  <div class="bg-layer">
+    <div class="bg-image" id="bgImage"></div>
+    <div class="bg-overlay"></div>
+  </div>
+
+  <!-- 主容器 -->
+  <div class="main-container">
+    <!-- 顶部状态栏 -->
+    <header class="top-bar">
+      <div class="top-bar-right">
+        <button class="lock-btn" id="lockBtn" aria-label="锁屏" title="锁屏 (Ctrl/Cmd+Shift+L)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换深浅主题" title="切换主题">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+        <button class="settings-btn" id="settingsBtn" aria-label="打开设置" title="设置">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 中央区域 -->
+    <main class="center-content">
+      <!-- 时间显示 -->
+      <div class="time-section">
+        <h1 class="time-display" id="timeDisplay">14:32</h1>
+        <p class="date-display"><span id="dateDisplay">7月6日</span><span id="weekdayDisplay">星期日</span></p>
+      </div>
+
+      <!-- 搜索框 -->
+      <div class="search-box">
+        <div class="search-engine" id="searchEngine">
+          <span class="search-engine-name" id="searchEngineName">必应</span>
+          <svg class="search-engine-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="search-engine-menu" id="searchEngineMenu"></div>
+        </div>
+        <input type="text" placeholder="搜索或输入网址..." id="searchInput" aria-label="搜索或输入网址">
+        <button type="button" class="search-btn" aria-label="搜索">
+          <span>搜索</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+      </div>
+
+      <!-- 快捷链接 -->
+      <div class="quick-links" id="quickLinks">
+        <a href="#" class="link-card add-link" id="addLinkBtn" role="button" tabindex="0">
+          <div class="link-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          </div>
+          <span>添加</span>
+        </a>
+      </div>
+
+    </main>
+
+    <!-- 每日一句 -->
+    <div class="quote-section" id="quoteSection">
+      <p class="quote-text">"最好的爱情，是两个人一起变得更好。"</p>
+      <p class="quote-author">— TabSync</p>
+    </div>
+
+    <!-- 纪念日提示 -->
+    <div class="anniversary-popup" id="anniversaryPopup" role="dialog" aria-modal="true" aria-label="纪念日提醒">
+      <div class="anniversary-content">
+        <div class="anniversary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
+        </div>
+        <h3>今天是你们在一起的第 365 天！</h3>
+        <p>一年前的今天，你们开始了这段美好的旅程。</p>
+        <button class="anniversary-btn" id="anniversaryBtn">查看回忆</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 协作面板（右侧滑出） -->
+  <aside class="side-panel" id="sidePanel" role="dialog" aria-label="协作面板">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <button class="panel-back" id="panelBack" aria-label="返回" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h3 id="panelTitle">协作面板</h3>
+      </div>
+      <button class="panel-close" id="panelClose" aria-label="关闭面板">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-content" id="panelContent">
+      <!-- 动态加载内容 -->
+    </div>
+  </aside>
+
+
+
+  <!-- 锁屏覆盖层 -->
+  <div class="lock-screen" id="lockScreen" role="dialog" aria-modal="true" aria-label="锁屏">
+    <div class="lock-clock">
+      <div class="lock-time" id="lockTimeDisplay">--:--</div>
+      <div class="lock-date" id="lockDateDisplay"></div>
+    </div>
+    <p class="lock-hint">点击任意处或按 Esc 解锁</p>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
