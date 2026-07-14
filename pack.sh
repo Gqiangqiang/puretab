@@ -21,6 +21,7 @@ zip -r -X "$OUTPUT" \
   css/ \
   js/ \
   icons/ \
+  _locales/ \
   -x "*/.*" "*/.DS_Store"
 
 echo ""
