@@ -38,6 +38,32 @@ class StorageWrapper {
       localStorage.setItem(key, val);
     }
   }
+
+  // 获取所有 puretab_ 开头的数据
+  getAllData() {
+    const data = {};
+    if (this._useChrome) {
+      Object.keys(this.cache).forEach(key => {
+        if (key.startsWith('puretab_')) data[key] = this.cache[key];
+      });
+    } else {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('puretab_')) data[key] = localStorage.getItem(key);
+      }
+    }
+    return data;
+  }
+
+  // 批量导入数据
+  async importData(data) {
+    if (this._useChrome) {
+      Object.entries(data).forEach(([key, value]) => { this.cache[key] = value; });
+      await chrome.storage.local.set(data);
+    } else {
+      Object.entries(data).forEach(([key, value]) => { localStorage.setItem(key, value); });
+    }
+  }
 }
 
 class PureTabApp {
@@ -57,6 +83,7 @@ class PureTabApp {
       timeWeight: 300,
       showLinks: true,
       showLinkText: true,
+      showIconBg: true,
       colsPerRow: 6,
       linkTarget: '_self',
       // 锁屏
@@ -96,7 +123,7 @@ class PureTabApp {
 
   loadPreferences() {
     const bool = (k, def) => { const v = this.storage.getItem(k); return v !== null ? v === 'true' : def; };
-    const savedEngines = this.storage.getItem('tabsync_search_engines');
+    const savedEngines = this.storage.getItem('puretab_search_engines');
     if (savedEngines) {
       try { this.state.searchEngines = JSON.parse(savedEngines); } catch(e) {}
     }
@@ -104,27 +131,27 @@ class PureTabApp {
       this.state.searchEngines = this.getDefaultSearchEngines();
       this.saveSearchEngines();
     }
-    const savedEngine = this.storage.getItem('tabsync_search_engine');
+    const savedEngine = this.storage.getItem('puretab_search_engine');
     if (savedEngine && this.state.searchEngines.some(e => e.id === savedEngine)) {
       this.state.searchEngine = savedEngine;
     } else if (savedEngine) {
       const old = { bing: '必应', baidu: '百度', google: '谷歌' };
       const byName = this.state.searchEngines.find(e => e.name === old[savedEngine]);
       this.state.searchEngine = byName ? byName.id : this.state.searchEngines[0].id;
-      this.storage.setItem('tabsync_search_engine', this.state.searchEngine);
+      this.storage.setItem('puretab_search_engine', this.state.searchEngine);
     } else {
       this.state.searchEngine = this.state.searchEngines[0].id;
-      this.storage.setItem('tabsync_search_engine', this.state.searchEngine);
+      this.storage.setItem('puretab_search_engine', this.state.searchEngine);
     }
-    this.state.showDate = bool('tabsync_show_date', true);
-    this.state.showWeekday = bool('tabsync_show_weekday', true);
-    this.state.showQuote = bool('tabsync_show_quote', true);
-    this.state.showTime = bool('tabsync_show_time', true);
-    const savedWeight = parseInt(this.storage.getItem('tabsync_time_weight'));
+    this.state.showDate = bool('puretab_show_date', true);
+    this.state.showWeekday = bool('puretab_show_weekday', true);
+    this.state.showQuote = bool('puretab_show_quote', true);
+    this.state.showTime = bool('puretab_show_time', true);
+    const savedWeight = parseInt(this.storage.getItem('puretab_time_weight'));
     this.state.timeWeight = [300,400,500,600,700].includes(savedWeight) ? savedWeight : 300;
-    this.state.showLinks = bool('tabsync_show_links', true);
-    this.state.showLinkText = bool('tabsync_show_link_text', true);
-    try { this.collapsedSections = new Set(JSON.parse(this.storage.getItem('tabsync_collapsed_sections') || '[]')); } catch(e) { this.collapsedSections = new Set(); }
+    this.state.showLinks = bool('puretab_show_links', true);
+    this.state.showLinkText = bool('puretab_show_link_text', true);
+    try { this.collapsedSections = new Set(JSON.parse(this.storage.getItem('puretab_collapsed_sections') || '[]')); } catch(e) { this.collapsedSections = new Set(); }
   }
 
   getDefaultSearchEngines() {
@@ -136,7 +163,7 @@ class PureTabApp {
   }
 
   saveSearchEngines() {
-    this.storage.setItem('tabsync_search_engines', JSON.stringify(this.state.searchEngines));
+    this.storage.setItem('puretab_search_engines', JSON.stringify(this.state.searchEngines));
   }
 
   applyVisibility() {
@@ -146,6 +173,7 @@ class PureTabApp {
     document.body.classList.toggle('hide-time', !this.state.showTime);
     document.body.classList.toggle('hide-links', !this.state.showLinks);
     document.body.classList.toggle('hide-link-text', !this.state.showLinkText);
+    document.body.classList.toggle('hide-icon-bg', !this.state.showIconBg);
   }
 
   // 应用时间字体粗细（主时钟与锁屏时钟同步）
@@ -259,7 +287,7 @@ class PureTabApp {
       opt.addEventListener('click', (ev) => {
         ev.stopPropagation();
         this.state.searchEngine = e.id;
-        this.storage.setItem('tabsync_search_engine', e.id);
+        this.storage.setItem('puretab_search_engine', e.id);
         if (nameEl) nameEl.textContent = e.name;
         this.refreshEngineMenu(menu);
         menu.classList.remove('open');
@@ -389,7 +417,8 @@ class PureTabApp {
     ];
     const iconToggles = [
       { key: 'showLinks', label: '快捷链接' },
-      { key: 'showLinkText', label: '图标文字' }
+      { key: 'showLinkText', label: '图标文字' },
+      { key: 'showIconBg', label: '图标背景色' }
     ];
     const thmBtn = (v, label, disabled = false) => '<button class="settings-cols-btn' + (this.state.theme === v ? ' active' : '') + '" data-theme="' + v + '"' + (disabled ? ' disabled' : '') + '>' + label + '</button>';
     // 时间字体粗细选项
@@ -437,6 +466,15 @@ class PureTabApp {
         '<div class="settings-toggle-row"><span class="settings-toggle-label">无操作自动锁屏</span><div class="settings-switch' + (this.state.autoLockEnabled ? ' on' : '') + '" data-toggle="autoLockEnabled"></div></div>' +
         '<div class="settings-lock-times">' + lockTimeBtn(30,'30秒') + lockTimeBtn(60,'1分钟') + lockTimeBtn(180,'3分钟') + lockTimeBtn(300,'5分钟') + lockTimeBtn(600,'10分钟') + '</div>' +
         '<p class="settings-lock-hint">手动锁屏：点击顶栏锁形图标，或按 Ctrl/Cmd+Shift+L</p>'
+      ) +
+      section('data', '数据管理',
+        '<button class="settings-menu-btn" id="exportDataBtn">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>' +
+        '导出数据</button>' +
+        '<button class="settings-menu-btn" id="importDataBtn">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>' +
+        '导入数据</button>' +
+        '<p class="settings-data-hint">导出为 JSON 文件，可备份或迁移到其他设备</p>'
       )
     );
   }
@@ -451,7 +489,7 @@ class PureTabApp {
         const collapsed = sectionEl.classList.toggle('collapsed');
         if (collapsed) this.collapsedSections.add(key);
         else this.collapsedSections.delete(key);
-        this.storage.setItem('tabsync_collapsed_sections', JSON.stringify([...this.collapsedSections]));
+        this.storage.setItem('puretab_collapsed_sections', JSON.stringify([...this.collapsedSections]));
       });
     });
 
@@ -468,7 +506,7 @@ class PureTabApp {
         if (btn.dataset.theme !== undefined) {
           const v = btn.dataset.theme;
           this.state.theme = v;
-          this.storage.setItem('tabsync_theme', v);
+          this.storage.setItem('puretab_theme', v);
           if (v === 'auto') {
             this.applyAutoTheme();
           } else if (v === 'system') {
@@ -499,7 +537,7 @@ class PureTabApp {
         e.stopPropagation();
         const v = parseInt(btn.dataset.timeWeight);
         this.state.timeWeight = v;
-        this.storage.setItem('tabsync_time_weight', v);
+        this.storage.setItem('puretab_time_weight', v);
         this.applyTimeWeight();
         container.querySelectorAll('[data-time-weight]').forEach(b => {
           b.classList.toggle('active', parseInt(b.dataset.timeWeight) === v);
@@ -511,7 +549,7 @@ class PureTabApp {
       sw.addEventListener('click', () => {
         const key = sw.dataset.toggle;
         this.state[key] = !this.state[key];
-        this.storage.setItem('tabsync_' + key.replace(/[A-Z]/g, m => '_' + m.toLowerCase()), this.state[key]);
+        this.storage.setItem('puretab_' + key.replace(/[A-Z]/g, m => '_' + m.toLowerCase()), this.state[key]);
         this.applyVisibility();
         sw.classList.toggle('on', this.state[key]);
         // 自动锁屏开关：重启计时器并切换时长按钮可用性（就地更新，避免重渲染导致面板被误关）
@@ -530,7 +568,7 @@ class PureTabApp {
         e.stopPropagation();
         if (btn.disabled) return;
         this.state.autoLockTime = parseInt(btn.dataset.lockTime);
-        this.storage.setItem('tabsync_auto_lock_time', this.state.autoLockTime);
+        this.storage.setItem('puretab_auto_lock_time', this.state.autoLockTime);
         this.applyAutoLockChange();
         container.querySelectorAll('[data-lock-time]').forEach(b => {
           b.classList.toggle('active', parseInt(b.dataset.lockTime) === this.state.autoLockTime);
@@ -544,7 +582,7 @@ class PureTabApp {
         e.stopPropagation();
         const v = btn.dataset.linkTarget;
         this.state.linkTarget = v;
-        this.storage.setItem('tabsync_link_target', v);
+        this.storage.setItem('puretab_link_target', v);
         this.applyLinkTarget();
         container.querySelectorAll('[data-link-target]').forEach(b => {
           b.classList.toggle('active', b.dataset.linkTarget === v);
@@ -555,6 +593,24 @@ class PureTabApp {
     const sizeRange = container.querySelector('#sizeRange');
     if (sizeRange) {
       sizeRange.addEventListener('input', () => this.applyCardSize(sizeRange.value, container));
+    }
+
+    // 导出数据
+    const exportBtn = container.querySelector('#exportDataBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.exportData();
+      });
+    }
+
+    // 导入数据
+    const importBtn = container.querySelector('#importDataBtn');
+    if (importBtn) {
+      importBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.importData();
+      });
     }
 
     // 深色时段范围条（仅自动模式下存在）
@@ -611,8 +667,8 @@ class PureTabApp {
     const refresh = () => {
       this.state.darkStart = parseFloat(startRange.value);
       this.state.darkEnd = parseFloat(endRange.value);
-      this.storage.setItem('tabsync_dark_start', this.state.darkStart);
-      this.storage.setItem('tabsync_dark_end', this.state.darkEnd);
+      this.storage.setItem('puretab_dark_start', this.state.darkStart);
+      this.storage.setItem('puretab_dark_end', this.state.darkEnd);
       track.style.background = this.buildRangeGradient();
       startLabel.textContent = fmt(this.state.darkStart);
       endLabel.textContent = fmt(this.state.darkEnd);
@@ -663,7 +719,7 @@ class PureTabApp {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.state.searchEngine = btn.dataset.id;
-        this.storage.setItem('tabsync_search_engine', this.state.searchEngine);
+        this.storage.setItem('puretab_search_engine', this.state.searchEngine);
         const menu = document.getElementById('searchEngineMenu');
         if (menu) this.refreshEngineMenu(menu);
         this.refreshSearchEnginesPanel();
@@ -681,7 +737,7 @@ class PureTabApp {
         this.state.searchEngines = this.state.searchEngines.filter(e => e.id !== id);
         if (this.state.searchEngine === id) {
           this.state.searchEngine = this.state.searchEngines[0].id;
-          this.storage.setItem('tabsync_search_engine', this.state.searchEngine);
+          this.storage.setItem('puretab_search_engine', this.state.searchEngine);
         }
         this.saveSearchEngines();
         const menu = document.getElementById('searchEngineMenu');
@@ -781,7 +837,7 @@ class PureTabApp {
         url: result.url
       });
       this.state.searchEngine = this.state.searchEngines[this.state.searchEngines.length - 1].id;
-      this.storage.setItem('tabsync_search_engine', this.state.searchEngine);
+      this.storage.setItem('puretab_search_engine', this.state.searchEngine);
       this.saveSearchEngines();
       const menu = document.getElementById('searchEngineMenu');
       if (menu) this.refreshEngineMenu(menu);
@@ -800,7 +856,7 @@ class PureTabApp {
   applyCardSize(v, container) {
     v = Math.max(80, Math.min(180, parseInt(v) || 108));
     this.state.cardWidth = v;
-    this.storage.setItem('tabsync_card_width', v);
+    this.storage.setItem('puretab_card_width', v);
     this.applyGridColumns();
     if (!container) return;
     const range = container.querySelector('#sizeRange');
@@ -822,7 +878,7 @@ class PureTabApp {
   applyColsCount(v, container) {
     v = Math.max(4, Math.min(10, parseInt(v) || 6));
     this.state.colsPerRow = v;
-    this.storage.setItem('tabsync_cols_per_row', v);
+    this.storage.setItem('puretab_cols_per_row', v);
     this.applyColsPerRow();
     if (!container) return;
     const range = container.querySelector('#colsRange');
@@ -836,11 +892,11 @@ class PureTabApp {
   // ========================================
   initTheme() {
     // 主题模式：light / dark / auto / system（默认 auto；auto 按时段，system 跟随系统）
-    const savedTheme = this.storage.getItem('tabsync_theme');
+    const savedTheme = this.storage.getItem('puretab_theme');
     this.state.theme = ['light','dark','auto','system'].includes(savedTheme) ? savedTheme : 'auto';
     // 深色时段（默认 18:00 ~ 次日 07:00）
-    const ds = parseFloat(this.storage.getItem('tabsync_dark_start'));
-    const de = parseFloat(this.storage.getItem('tabsync_dark_end'));
+    const ds = parseFloat(this.storage.getItem('puretab_dark_start'));
+    const de = parseFloat(this.storage.getItem('puretab_dark_end'));
     this.state.darkStart = (!isNaN(ds) && ds >= 0 && ds <= 24) ? ds : 18;
     this.state.darkEnd = (!isNaN(de) && de >= 0 && de <= 24) ? de : 7;
 
@@ -877,7 +933,7 @@ class PureTabApp {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = next;
       this.state.theme = next;
-      this.storage.setItem('tabsync_theme', next);
+      this.storage.setItem('puretab_theme', next);
     });
   }
 
@@ -920,7 +976,7 @@ class PureTabApp {
   // ========================================
   loadData() {
     // 从 chrome.storage.local 加载所有数据
-    const keys = ['tabsync_theme'];
+    const keys = ['puretab_theme'];
     keys.forEach(key => {
       const data = this.storage.getItem(key);
       if (data) {
@@ -950,7 +1006,7 @@ class PureTabApp {
   }
 
   initQuickLinks() {
-    const saved = this.storage.getItem('tabsync_links');
+    const saved = this.storage.getItem('puretab_links');
     if (saved) {
       try { this.state.links = JSON.parse(saved); } catch(e) {}
       let migrated = false;
@@ -961,11 +1017,11 @@ class PureTabApp {
       this.state.links = this.getDefaultLinks();
       this.saveLinks();
     }
-    const savedW = this.storage.getItem('tabsync_card_width');
+    const savedW = this.storage.getItem('puretab_card_width');
     this.state.cardWidth = savedW ? (parseInt(savedW) || 108) : 108;
-    const savedCols = parseInt(this.storage.getItem('tabsync_cols_per_row'));
+    const savedCols = parseInt(this.storage.getItem('puretab_cols_per_row'));
     this.state.colsPerRow = (savedCols >= 4 && savedCols <= 10) ? savedCols : 6;
-    this.state.linkTarget = this.storage.getItem('tabsync_link_target') === '_blank' ? '_blank' : '_self';
+    this.state.linkTarget = this.storage.getItem('puretab_link_target') === '_blank' ? '_blank' : '_self';
     this.renderLinks();
     this.applyGridColumns();
     this.applyColsPerRow();
@@ -1210,8 +1266,8 @@ class PureTabApp {
       this.safeHTML(container, entry.data);
       const svg = container.querySelector('svg');
       if (svg) {
-        svg.setAttribute('width', '22');
-        svg.setAttribute('height', '22');
+        svg.setAttribute('width', '30');
+        svg.setAttribute('height', '30');
         svg.setAttribute('fill', 'currentColor');
         svg.querySelectorAll('[fill]:not([fill="none"])').forEach(el => el.setAttribute('fill', 'currentColor'));
       }
@@ -1242,7 +1298,7 @@ class PureTabApp {
 
   getCachedIcon(url) {
     try {
-      const v = this.storage.getItem('tabsync_icon:' + url);
+      const v = this.storage.getItem('puretab_icon:' + url);
       if (!v) return null;
       const entry = JSON.parse(v);
       if (entry && entry.type === 'img' && typeof entry.data === 'string' && entry.data.includes('google.com/s2/favicons')) return null;
@@ -1251,7 +1307,7 @@ class PureTabApp {
   }
 
   setCachedIcon(url, entry) {
-    try { this.storage.setItem('tabsync_icon:' + url, JSON.stringify(entry)); } catch {}
+    try { this.storage.setItem('puretab_icon:' + url, JSON.stringify(entry)); } catch {}
   }
 
   setDefaultIcon(container) {
@@ -1326,7 +1382,7 @@ class PureTabApp {
   showLinkEditor(existingLink) {
     return new Promise((resolve) => {
       const isEdit = !!existingLink;
-      const tipDismissed = this.storage.getItem('tabsync_link_tip_dismissed') === 'true';
+      const tipDismissed = this.storage.getItem('puretab_link_tip_dismissed') === 'true';
       const tipHtml = tipDismissed ? '' : (
         '<div class="link-editor-tip" role="note">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>' +
@@ -1375,7 +1431,7 @@ class PureTabApp {
 
       if (dismissBtn) {
         dismissBtn.addEventListener('click', () => {
-          this.storage.setItem('tabsync_link_tip_dismissed', 'true');
+          this.storage.setItem('puretab_link_tip_dismissed', 'true');
           const tip = overlay.querySelector('.link-editor-tip');
           if (!tip) return;
           tip.style.opacity = '0';
@@ -1514,7 +1570,7 @@ class PureTabApp {
   }
 
   saveLinks() {
-    this.storage.setItem('tabsync_links', JSON.stringify(this.state.links));
+    this.storage.setItem('puretab_links', JSON.stringify(this.state.links));
   }
 
   // ========================================
@@ -1522,8 +1578,8 @@ class PureTabApp {
   // ========================================
   initLockScreen() {
     // 读取自动锁屏设置（默认关闭）
-    this.state.autoLockEnabled = this.storage.getItem('tabsync_auto_lock_enabled') === 'true';
-    const savedTime = parseInt(this.storage.getItem('tabsync_auto_lock_time'));
+    this.state.autoLockEnabled = this.storage.getItem('puretab_auto_lock_enabled') === 'true';
+    const savedTime = parseInt(this.storage.getItem('puretab_auto_lock_time'));
     this.state.autoLockTime = (savedTime && savedTime > 0) ? savedTime : 60;
 
     const lockScreen = document.getElementById('lockScreen');
@@ -1591,14 +1647,59 @@ class PureTabApp {
   }
 
   // ========================================
+  // 数据导入导出
+  // ========================================
+  exportData() {
+    const data = this.storage.getAllData();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const date = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+    a.href = url;
+    a.download = 'puretab-backup-' + date + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    this.showToast('数据已导出 ✅');
+  }
+
+  importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        // 验证数据格式
+        if (typeof data !== 'object' || Array.isArray(data)) throw new Error();
+        const validKeys = Object.keys(data).filter(k => k.startsWith('puretab_'));
+        if (!validKeys.length) { this.showToast('无效的备份文件'); return; }
+        // 只导入 valid keys
+        const filtered = {};
+        validKeys.forEach(k => { filtered[k] = data[k]; });
+        await this.storage.importData(filtered);
+        this.showToast('数据已导入，正在刷新...');
+        setTimeout(() => location.reload(), 800);
+      } catch (e) {
+        this.showToast('导入失败：文件格式错误');
+      }
+    });
+    input.click();
+  }
+
+  // ========================================
   // Toast 提示
   // ========================================
   showToast(message) {
-    const existing = document.querySelector('.tabsync-toast');
+    const existing = document.querySelector('.puretab-toast');
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
-    toast.className = 'tabsync-toast';
+    toast.className = 'puretab-toast';
     toast.textContent = message;
     document.body.appendChild(toast);
 
@@ -1619,16 +1720,16 @@ class PureTabApp {
 // 初始化应用
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
-  window.tabSync = new PureTabApp();
+  window.pureTab = new PureTabApp();
 });
 
 // 键盘快捷键
 document.addEventListener('keydown', (e) => {
   // 锁屏态：仅允许 Esc 解锁，屏蔽其余快捷键
-  if (window.tabSync?.state.locked) {
+  if (window.pureTab?.state.locked) {
     if (e.key === 'Escape') {
       e.preventDefault();
-      window.tabSync.unlock();
+      window.pureTab.unlock();
     }
     return;
   }
@@ -1637,7 +1738,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const panel = document.getElementById('sidePanel');
     if (panel?.classList.contains('open')) {
-      window.tabSync?.closePanel();
+      window.pureTab?.closePanel();
     }
   }
 

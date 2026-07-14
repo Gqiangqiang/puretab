@@ -509,8 +509,12 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  justify-content: center;
+  gap: var(--space-1);
+  width: var(--card-w);
+  height: var(--card-w);
+  padding: var(--space-3);
+  overflow: hidden;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -518,10 +522,11 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   border: 1px solid var(--border-glass);
   text-decoration: none;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .link-card:hover {
@@ -537,12 +542,13 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--card-w) * 0.3);
-  height: calc(var(--card-w) * 0.3);
-  padding: var(--space-2);
+  width: calc(var(--card-w) * 0.48);
+  height: calc(var(--card-w) * 0.48);
+  padding: var(--space-1);
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, rgba(150, 140, 130, 0.08), rgba(168, 158, 148, 0.08));
   color: var(--accent-rose);
+  flex-shrink: 0;
 }
 
 .link-icon svg { width: 100%; height: 100%; }
@@ -563,6 +569,8 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .link-card:not(.add-link) { cursor: grab; }
@@ -858,6 +866,13 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   height: 20px;
   color: var(--accent-rose);
   flex-shrink: 0;
+}
+
+.settings-data-hint {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: var(--space-2);
+  line-height: 1.4;
 }
 
 .settings-cols {
@@ -1162,6 +1177,7 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
 body.hide-quote .quote-section { display: none; }
 body.hide-links .quick-links { display: none; }
 body.hide-link-text .link-card span { display: none; }
+body.hide-icon-bg .link-icon { background: transparent !important; }
 
 /* ========================================
    搜索引擎管理面板
@@ -1305,7 +1321,7 @@ body.hide-link-text .link-card span { display: none; }
 
   .quick-links { gap: var(--space-2); }
 
-  .link-card { padding: var(--space-2) var(--space-3); }
+  .link-card { padding: var(--space-2); }
 
   .side-panel { width: 100%; right: -100%; }
 }

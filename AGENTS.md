@@ -56,7 +56,7 @@ change-log.md        # 更新日志（每次打包需更新，见「约定」）
 - `StorageWrapper` 提供同步 API（`getItem` / `setItem`），内部维护内存缓存 + 异步 fire-and-forget 写入 `chrome.storage.local`
 - 构造函数异步初始化：`storage.init()` 加载全部数据到缓存后，才调用 `init()` 渲染 UI
 - 开发降级：非扩展上下文下（如直接在浏览器打开 newtab.html）自动回退到 `localStorage`
-- ⚠️ v2.0.0 已移除从 `localStorage` 迁移旧 `tabsync_*` 数据的逻辑。chrome.storage.local 是唯一持久化源
+- ⚠️ v2.0.0 已移除从 `localStorage` 迁移旧 `puretab_*` 数据的逻辑。chrome.storage.local 是唯一持久化源
 - ⚠️ `loadData()` 当前是占位逻辑（仅读 `puretab_theme` 且未应用回 UI）。真正的持久化加载分散在 `loadPreferences()` + 各模块自己的 `initXxx()`（各自读取所需 key）。**新增持久化字段：在对应 `initXxx()` 内读、在对应写操作处存即可，不要依赖 `loadData()`。**
 
 ### 主题系统
