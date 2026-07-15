@@ -1,6 +1,6 @@
 **PureTab：极简新标签页扩展**
 
-PureTab 是一款适用于 Chrome、Edge 和 Firefox 的极简浏览器扩展，将新标签页变为干净无干扰的仪表盘，兼顾美观、实用与隐私，提升专注力和效率。
+PureTab 是一款极简浏览器扩展，将新标签页变为干净无干扰的仪表盘，兼顾美观、实用与隐私，提升专注力和效率。
 
 **界面与核心功能**  
 - **实时时钟** – 显示时间、日期和星期，配合柔和渐变背景。  
@@ -36,7 +36,7 @@ PureTab 是一款适用于 Chrome、Edge 和 Firefox 的极简浏览器扩展，
 
 **PureTab: Minimalist New Tab Extension**  
 
-PureTab is a minimalist browser extension for Chrome, Edge, and Firefox that transforms your new tab into a clean, distraction‑free dashboard. It blends elegance, utility, and privacy to boost focus and productivity.  
+PureTab is a minimalist browser extension, it transforms your new tab into a clean, distraction‑free dashboard. It blends elegance, utility, and privacy to boost focus and productivity.  
 
 **Interface & Core Features**  
 - **Real‑time clock** – displays time, date, and weekday with a smooth gradient background.  

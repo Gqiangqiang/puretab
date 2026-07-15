@@ -435,7 +435,7 @@ class PureTabApp {
         '<h4 class="settings-heading">' + title + '</h4>' +
         '<svg class="settings-collapse-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
         '</button>' +
-        '<div class="settings-collapse-body"><div class="settings-collapse-inner">' + body + '</div></div>' +
+        '<div class="settings-collapse-body"><div class="settings-collapse-inner"><div class="settings-collapse-card">' + body + '</div></div></div>' +
         '</div>';
     };
     return (
@@ -450,11 +450,11 @@ class PureTabApp {
       ) +
       section('display', '显示设置',
         toggles.map(t => '<div class="settings-toggle-row"><span class="settings-toggle-label">' + t.label + '</span><div class="settings-switch' + (this.state[t.key] ? ' on' : '') + '" data-toggle="' + t.key + '"></div></div>').join('') +
-        iconToggles.map(t => '<div class="settings-toggle-row"><span class="settings-toggle-label">' + t.label + '</span><div class="settings-switch' + (this.state[t.key] ? ' on' : '') + '" data-toggle="' + t.key + '"></div></div>').join('') +
         '<h4 class="settings-heading sub-heading">时间字体粗细</h4>' +
         '<div class="settings-cols">' + weightBtn(300,'细') + weightBtn(400,'常规') + weightBtn(500,'中等') + weightBtn(600,'半粗') + weightBtn(700,'粗') + '</div>'
       ) +
       section('icon', '图标设置',
+        iconToggles.map(t => '<div class="settings-toggle-row"><span class="settings-toggle-label">' + t.label + '</span><div class="settings-switch' + (this.state[t.key] ? ' on' : '') + '" data-toggle="' + t.key + '"></div></div>').join('') +
         '<h4 class="settings-heading sub-heading">图标大小 <span class="size-value" id="sizeValueLabel">' + this.state.cardWidth + 'px</span></h4>' +
         '<div class="size-range-wrap"><input type="range" min="80" max="180" step="1" value="' + this.state.cardWidth + '" class="size-range" id="sizeRange"><div class="size-marks" id="sizePresets"><span class="size-end size-end-start">80</span>' + markBtn(88,'小') + markBtn(108,'中') + markBtn(132,'大') + markBtn(160,'特大') + '<span class="size-end size-end-end">180</span></div></div>' +
         '<h4 class="settings-heading sub-heading">每行显示图标数 <span class="size-value" id="colsValueLabel">' + this.state.colsPerRow + '</span></h4>' +
@@ -1622,8 +1622,14 @@ class PureTabApp {
 
   lock() {
     const lockScreen = document.getElementById('lockScreen');
-    if (!lockScreen) return;
+    if (!lockScreen || this.state.locked) return;
     this.state.locked = true;
+    // 清理可能残留的关闭动画状态及其监听器
+    if (this._unlockEndHandler) {
+      lockScreen.removeEventListener('animationend', this._unlockEndHandler);
+      this._unlockEndHandler = null;
+    }
+    lockScreen.classList.remove('hide');
     lockScreen.classList.add('show');
     if (this._lockTimer) { clearTimeout(this._lockTimer); this._lockTimer = null; }
     // 失去焦点，避免锁屏后输入仍打到搜索框
@@ -1632,9 +1638,20 @@ class PureTabApp {
 
   unlock() {
     const lockScreen = document.getElementById('lockScreen');
-    if (!lockScreen) return;
+    if (!lockScreen || !this.state.locked) return;
     this.state.locked = false;
+    // 触发关闭动画（与开启的 fadeUp 相反）
     lockScreen.classList.remove('show');
+    lockScreen.classList.add('hide');
+    // 动画结束后彻底清理，恢复隐藏状态
+    // 仅在 fadeDown 结束时执行，避免被后续 fadeUp 的 animationend 误触发
+    this._unlockEndHandler = (e) => {
+      if (e.animationName !== 'fadeDown') return;
+      lockScreen.classList.remove('hide');
+      lockScreen.removeEventListener('animationend', this._unlockEndHandler);
+      this._unlockEndHandler = null;
+    };
+    lockScreen.addEventListener('animationend', this._unlockEndHandler);
     this.resetLockTimer();
   }
 

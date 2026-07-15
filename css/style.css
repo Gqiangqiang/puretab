@@ -355,6 +355,12 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* 锁屏关闭动画：与开启的 fadeUp 相反（向下淡出） */
+@keyframes fadeDown {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(16px); }
+}
+
 /* ========================================
    搜索框
    ======================================== */
@@ -542,8 +548,8 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--card-w) * 0.48);
-  height: calc(var(--card-w) * 0.48);
+  width: calc(var(--card-w) * 0.58);
+  height: calc(var(--card-w) * 0.58);
   padding: var(--space-1);
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, rgba(150, 140, 130, 0.08), rgba(168, 158, 148, 0.08));
@@ -755,24 +761,21 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   justify-content: space-between;
   gap: var(--space-2);
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-3);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--bg-glass);
+  padding: var(--space-2) var(--space-1);
+  margin-bottom: var(--space-2);
+  border: none;
+  background: transparent;
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
   font-family: inherit;
   font-size: 15px;
   font-weight: 600;
-  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+  transition: color var(--t-fast) var(--ease);
 }
 
 .settings-collapse-header:hover {
-  background: var(--bg-glass-hover);
-  border-color: var(--accent-rose);
-  transform: translateY(-1px);
+  color: var(--accent-rose);
 }
 
 .settings-collapse-header .settings-heading {
@@ -800,7 +803,6 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
 .settings-collapse-body {
   display: grid;
   grid-template-rows: 1fr;
-  padding: 0 var(--space-3);
   transition: grid-template-rows var(--t-base) var(--ease);
 }
 
@@ -808,9 +810,22 @@ body.hide-date #weekdayDisplay { margin-left: 0; }
   grid-template-rows: 0fr;
 }
 
+/* 折叠裁剪层：保持纯净（无 padding/border/background），
+   让 grid 0fr 能将其完全压缩到 0，避免折叠后残留空白 */
 .settings-collapse-inner {
   overflow: hidden;
   min-height: 0;
+}
+
+/* 卡片视觉层：背景/边框/内边距/圆角/阴影集中在此 */
+.settings-collapse-card {
+  padding: var(--space-4);
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
 }
 
 .settings-heading {
@@ -1634,13 +1649,19 @@ body.locked .side-panel {
   background: var(--bg-primary);
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--t-slow) var(--ease), visibility var(--t-slow);
 }
 
+/* 开启锁屏：向上淡入 */
 .lock-screen.show {
-  opacity: 1;
   visibility: visible;
   animation: fadeUp 0.5s var(--ease) both;
+}
+
+/* 关闭锁屏：向下淡出（fadeUp 的反向），动画结束后由 JS 移除并恢复隐藏 */
+.lock-screen.hide {
+  visibility: visible;
+  animation: fadeDown 0.5s var(--ease) both;
+  pointer-events: none;
 }
 
 .lock-clock {
